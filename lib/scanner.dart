@@ -18,7 +18,7 @@ class _ScannerPageState extends State<ScannerPage> {
         child: MobileScanner(onDetect: (capture) {
           final List<Barcode> barcodes = capture.barcodes;
           for (final barcode in barcodes) {
-            Navigator.canPop(context) ? Navigator.pop<String>(context, barcode.rawValue ?? 'No data in QR') : null;
+            Navigator.canPop(context) ? Navigator.pop<String>(context, barcode.rawValue ?? 'Aucune donnée dans QR') : null;
           }
         }),
       ),

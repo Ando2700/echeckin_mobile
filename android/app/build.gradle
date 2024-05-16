@@ -27,7 +27,8 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.example.qr_code_scanner"
-    compileSdkVersion flutter.compileSdkVersion
+    compileSdkVersion 34
+    // compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {
