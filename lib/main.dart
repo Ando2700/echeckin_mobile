@@ -13,7 +13,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({Key? key, required this.title});
   final String title;
 
   @override
@@ -63,8 +63,10 @@ class _MyHomePageState extends State<MyHomePage> {
               .eq('event_id', qrData.eventId)
               .single();
 
+          final attendee = await _getAttendee(qrData.attendeeId);
           setState(() {
-            qrResult = 'Le code QR a déjà été scanné';
+            qrResult =
+                'Le code QR a déjà été scanné pour ${attendee.firstname} ${attendee.lastname}';
             _isLoading = false;
           });
         } catch (e) {
@@ -72,8 +74,10 @@ class _MyHomePageState extends State<MyHomePage> {
             qrResult = 'La sauvegarde des données...';
           });
           await _saveDataToDatabase(qrData);
+          final attendee = await _getAttendee(qrData.attendeeId);
           setState(() {
-            qrResult = 'Données enregistrées avec succès!';
+            qrResult =
+                'Données enregistrées avec succès : Bienvenue ${attendee.firstname} ${attendee.lastname}!';
             _isLoading = false;
           });
         }
@@ -119,6 +123,54 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<Attendee> _getAttendee(String attendeeId) async {
+    final supabaseClient = Supabase.instance.client;
+    final response = await supabaseClient
+        .from('attendees')
+        .select('firstname, lastname')
+        .eq('id', attendeeId)
+        .single();
+
+    return Attendee(
+      firstname: response['firstname'],
+      lastname: response['lastname'],
+    );
+  }
+
+  Widget _buildResultWidget() {
+    IconData iconData;
+    Color iconColor;
+
+    if (qrResult.contains('Le code QR a déjà été scanné')) {
+      iconData = Icons.clear;
+      iconColor = Colors.red;
+    } else if (qrResult.contains('Données enregistrées avec succès')) {
+      iconData = Icons.check;
+      iconColor = Colors.green;
+    } else {
+      iconData = Icons.error;
+      iconColor = Colors.grey;
+    }
+
+    return Column(
+      children: [
+        Icon(
+          iconData,
+          color: iconColor,
+          size: 48,
+        ),
+        Text(
+          qrResult,
+          style: TextStyle(
+            fontSize: 18,
+            color: iconColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,12 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            qrResult == 'Le code QR a déjà été scanné'
-                ? const Icon(Icons.clear, color: Colors.red)
-                : qrResult == 'Données enregistrées avec succès!'
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : const SizedBox.shrink(),
-            Text(qrResult),
+            _buildResultWidget(),
             _isLoading
                 ? const CircularProgressIndicator()
                 : const SizedBox.shrink(),
@@ -149,6 +196,12 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+class Attendee {
+  Attendee({required this.firstname, required this.lastname});
+  final String firstname;
+  final String lastname;
 }
 
 class QrData {
